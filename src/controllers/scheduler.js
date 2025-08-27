@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { sendSMS } from "../controllers/smsController.js"; // Adjust path as needed
+import { ApiError } from "../utils/ApiError.js";
 
 const startSMSScheduler = () => {
   // Check if required environment variables are present
@@ -37,17 +38,17 @@ const startSMSScheduler = () => {
         "messages"
       );
     } catch (error) {
-      console.error("❌ Scheduled SMS task failed:", error.message);
+      console.error("Scheduled SMS task failed:", error.message);
     }
   });
 
-  console.log("✅ Hourly SMS scheduler started successfully");
+  console.log("Hourly SMS scheduler started successfully");
 };
 
 // Optional: Test function to send SMS immediately
 const testSMS = async () => {
   try {
-    console.log("🧪 Testing SMS immediately...");
+    console.log("Testing SMS immediately...");
 
     const result = await sendSMS({
       api_key: process.env.NEXMO_API_KEY,
@@ -57,11 +58,10 @@ const testSMS = async () => {
       text: "Test SMS - Backend is working!",
     });
 
-    console.log("✅ Test SMS sent successfully:", result);
+    console.log("Test SMS sent successfully:", result);
     return result;
   } catch (error) {
-    console.error("❌ Test SMS failed:", error.message);
-    throw error;
+    throw new ApiError(400, "Failed to send test SMS", error);
   }
 };
 
