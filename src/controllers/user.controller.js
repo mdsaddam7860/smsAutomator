@@ -40,7 +40,7 @@ let schedulerStarted = false;
 // Scheduler (runs every hour, but not immediately)
 async function scheduleSms(smsData) {
   // Run every hour
-  const intervalId = setInterval(async () => {
+  setInterval(async () => {
     try {
       const result = await sendSMS(smsData);
       console.log("Scheduled SMS sent:", result);
