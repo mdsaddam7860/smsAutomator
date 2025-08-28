@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 
-// ✅ Function to send SMS
+// Function to send SMS
 export const sendSMS = async (smsData) => {
   const { api_key, api_secret, to, from, text } = smsData;
 
@@ -30,38 +30,49 @@ export const sendSMS = async (smsData) => {
     throw new ApiError(400, "Failed to retrieve data from SMS API");
   }
 
-  console.log("SMS Response:", data);
+  console.log("SMS Response senSms fn : ", data);
   return data;
 };
 
-// ✅ Scheduler (runs once now, then every hour)
-async function scheduleSms(smsData) {
-  try {
-    const result = await sendSMS(smsData);
-    console.log("Returned Data:", result);
-  } catch (err) {
-    throw new ApiError(400, "Failed to send SMS", err);
-  }
+// Track if scheduler has been started to prevent multiple instances
+let schedulerStarted = false;
 
-  // run again after 1 hour
-  setTimeout(() => scheduleSms(smsData), 60 * 60 * 1000);
+// Scheduler (runs every hour, but not immediately)
+async function scheduleSms(smsData) {
+  // Run every hour
+  const intervalId = setInterval(async () => {
+    try {
+      const result = await sendSMS(smsData);
+      console.log("Scheduled SMS sent:", result);
+    } catch (err) {
+      console.error("Failed to send scheduled SMS:", err);
+    }
+  }, 60 * 60 * 1000); // 1 hour
 }
 
-// ✅ Express controller
+// Express controller
 const smsController = asyncHandler(async (req, res) => {
   const smsData = {
     api_key: req.body.api_key || "181303d1",
     api_secret: req.body.api_secret || "Insideatest@1",
     to: req.body.to || "919818010584",
     from: req.body.from || "VonageTest",
-    text: req.body.text || "Hello! This SMS is sent every hour 🚀",
+    text: req.body.text || "Hello! This SMS is sent every hour",
   };
 
-  // send first SMS immediately
+  // Send first SMS immediately
   const data = await sendSMS(smsData);
 
-  // start scheduler (hourly SMS)
-  scheduleSms(smsData);
+  if (!data) {
+    throw new ApiError(400, "Failed to send first SMS");
+  }
+
+  // Start scheduler only if it hasn't been started yet
+  if (!schedulerStarted) {
+    scheduleSms(smsData);
+    schedulerStarted = true;
+    console.log("Hourly SMS scheduler started");
+  }
 
   return res
     .status(200)
