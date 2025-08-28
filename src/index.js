@@ -2,6 +2,7 @@ import { app } from "./app.js";
 import dotenv from "dotenv";
 import { ApiError } from "./utils/ApiError.js";
 import { smsController } from "./controllers/user.controller.js";
+import axios from "axios";
 
 dotenv.config({
   path: "./.env",
@@ -9,12 +10,14 @@ dotenv.config({
 const PORT = process.env.PORT ?? 8000;
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("SMS SERVER IS RUNNING");
 });
 
 try {
   app.listen(PORT, async (err, req, res, next) => {
     console.log(`server running at http://localhost:${PORT}`);
+
+    // await axios.get(`http://localhost:${PORT}/api/user/autoSendsms`);
 
     // try {
     //   const result = await smsController();

@@ -54,11 +54,11 @@ async function scheduleSms(smsData) {
 // Express controller
 const smsController = asyncHandler(async (req, res) => {
   const smsData = {
-    api_key: req.body.api_key ?? "181303d1",
-    api_secret: req.body.api_secret ?? "Insideatest@1",
-    to: req.body.to ?? "919818010584",
-    from: req.body.from ?? "VonageTest",
-    text: req.body.text ?? "Hello! This SMS is sent every hour",
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET,
+    to: req.body.to || "919818010584",
+    from: req.body.from || "VonageTest",
+    text: req.body.text || "Hello! This SMS is sent every hour",
   };
 
   // Send first SMS immediately
