@@ -3,6 +3,6 @@ import { smsController } from "../controllers/user.controller.js";
 
 const router = Router();
 
-router.route("/autoSendsms").post(smsController);
+router.route("/autoSendsms").get(smsController);
 
 export default router;

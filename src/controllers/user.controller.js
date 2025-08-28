@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import fetch from "node-fetch";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { hubApi } from "./hubApi.js";
 
 // Function to send SMS
 export const sendSMS = async (smsData) => {
@@ -53,11 +54,11 @@ async function scheduleSms(smsData) {
 // Express controller
 const smsController = asyncHandler(async (req, res) => {
   const smsData = {
-    api_key: req.body.api_key || "181303d1",
-    api_secret: req.body.api_secret || "Insideatest@1",
-    to: req.body.to || "919818010584",
-    from: req.body.from || "VonageTest",
-    text: req.body.text || "Hello! This SMS is sent every hour",
+    api_key: req.body.api_key ?? "181303d1",
+    api_secret: req.body.api_secret ?? "Insideatest@1",
+    to: req.body.to ?? "919818010584",
+    from: req.body.from ?? "VonageTest",
+    text: req.body.text ?? "Hello! This SMS is sent every hour",
   };
 
   // Send first SMS immediately
@@ -66,6 +67,27 @@ const smsController = asyncHandler(async (req, res) => {
   if (!data) {
     throw new ApiError(400, "Failed to send first SMS");
   }
+
+  // --- STEP 2: Create HubSpot note only if SMS success
+  const hubApiData = {
+    token: process.env.HUBSPOT_API_KEY,
+    body: `SMS Message<br>From: ${smsData.from}<br>To: ${smsData.to}`,
+    timestamp: Date.now(),
+    associations: [
+      {
+        to: { id: "150912596548" },
+        types: [
+          { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 },
+        ],
+      },
+    ],
+  };
+
+  console.log("Hub API Data: ", hubApiData);
+
+  const hubspotResponse = await hubApi(hubApiData);
+
+  console.log("HubSpot Response: ", hubspotResponse);
 
   // Start scheduler only if it hasn't been started yet
   if (!schedulerStarted) {
@@ -76,7 +98,13 @@ const smsController = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, data, "SMS sent and hourly schedule started"));
+    .json(
+      new ApiResponse(
+        200,
+        { data, hubspotResponse },
+        "SMS sent + HubSpot note created + scheduler started"
+      )
+    );
 });
 
 export { smsController };
